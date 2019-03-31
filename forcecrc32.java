@@ -104,6 +104,7 @@ public final class forcecrc32 {
 			
 			// Read entire file and calculate original CRC-32 value
 			@Unsigned int crc = getCrc32(raf);
+			//reverse of a signed value can be unsigned
 			@SuppressWarnings("signedness")
 			int p= Integer.reverse(crc);
 			if (printStatus)
@@ -111,8 +112,10 @@ public final class forcecrc32 {
 			
 			// Compute the change to make
 			@Unsigned int delta = crc ^ newCrc;
+			/*Annotation of reciprocalMod
+			  is needed and also of length function
+			  to get the return type as unsigned */
 			delta = (int)multiplyMod(reciprocalMod(powMod(2, (raf.length() - offset) * 8)), delta & 0xFFFFFFFFL);
-			
 			// Patch 4 bytes in the file
 			//Unable to seek unsigned value
 			raf.seek(offset);
@@ -121,10 +124,12 @@ public final class forcecrc32 {
 			   the requested number of bytes are read since bytes are unsigned.
 			   Annotation in jdk is needed */
 			raf.readFully(bytes4);
+			//reverse of a signed value can be unsigned
 			@SuppressWarnings("signedness")
 			@Unsigned int k=Integer.reverse(delta);
 			for (int i = 0; i < bytes4.length; i++)
 				bytes4[i] ^= k >>> (i * 8);
+			//Unable to seek unsigned value
 			raf.seek(offset);
 			raf.write(bytes4);
 			if (printStatus)
